@@ -65,6 +65,7 @@ class IntermediateCode(ParserVisitor):
         else:
             self.quads.generateQuadruple(childs[0], childs[1], '', 't' + str(self.quads.temps))
         self.quads.newTemp()
+        #print(self.quads.quadTable)
         return self.visitChildren(ctx)
 
     
@@ -77,30 +78,28 @@ class IntermediateCode(ParserVisitor):
         return self.visitChildren(ctx)
 
     def visitIdExpr(self, ctx:ParserParser.IdExprContext):
-        return 'ID'
-
-    def visitIntExpr(self, ctx:ParserParser.IntExprContext):
-        return 'Int'
-    
-    def visitStringExpr(self, ctx:ParserParser.StringExprContext):
-        if (len(ctx.getText()) > 30):
-            print("ERROR: Longitud de string excedida\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: Longitud de string excedida\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            
-
-        return 'String'
-    
-    def visitTrueExpr(self, ctx:ParserParser.TrueExprContext):
-        return 'Bool'
-    
-    def visitFalseExpr(self, ctx:ParserParser.TrueExprContext):
-        return 'Bool'
+        addr = self.getAttribute(ctx.getText())
+        if addr is None:
+            return 'd[0]'
+        return 'd[' + str(addr['address']) + ']'
     
     def visitAddExpr(self, ctx):
-        return ['add', ctx.left.getText(), ctx.right.getText()]
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return ['add', l, r]
     
     def visitMulExpr(self, ctx):
         return ['mult', ctx.left.getText(), ctx.right.getText()]
+
+    def visitMinusExpr(self, ctx):
+        return ['sub', ctx.left.getText(), ctx.right.getText()]
+
+    def visitDivExpr(self, ctx):
+        return ['div', ctx.left.getText(), ctx.right.getText()]
 
 
     def visitNegExpr(self, ctx):
@@ -126,14 +125,7 @@ class IntermediateCode(ParserVisitor):
 
             return 'Error'
         return 'Bool'
-    
-    def visitMinusExpr(self, ctx):
-        return ['sub', ctx.left.getText(), ctx.right.getText()]
-
-    
-    def visitDivExpr(self, ctx):
-        return ['div', ctx.left.getText(), ctx.right.getText()]
-    
+ 
     def visitEqualsExpr(self, ctx:ParserParser.EqualsExprContext):
         l = self.visit(ctx.left)
         r = self.visit(ctx.right)
