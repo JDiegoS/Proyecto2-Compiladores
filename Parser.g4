@@ -9,8 +9,8 @@ feature: name=ID LPAREN (parameter=param (COMMA param)*)* RPAREN COLON TYPE LBRA
 
 param: ID COLON TYPE;
 
-expr: left=ID ASSIGN right=expr        # AssignExpr
-    | name=ID LPAREN (first=expr (COMMA second=expr)*)* RPAREN        # MethodParenExpr
+expr: 
+    name=ID LPAREN (first=expr (COMMA second=expr)*)* RPAREN        # MethodParenExpr
     | left=expr (AT TYPE)? PERIOD name=ID LPAREN (first=expr (COMMA second=expr)*)* RPAREN        # MethodDotExpr
     | IF expr THEN expr ELSE expr FI        # IfThenExpr
     | WHILE expr LOOP expr POOL        # WhileExpr
@@ -33,4 +33,5 @@ expr: left=ID ASSIGN right=expr        # AssignExpr
     | TRUE        # TrueExpr
     | FALSE        # FalseExpr
     | ID        # IdExpr
+    | left=ID ASSIGN right=expr        # AssignExpr
     ;

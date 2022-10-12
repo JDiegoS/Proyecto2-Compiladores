@@ -84,11 +84,6 @@ class ParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ParserParser#AssignExpr.
-    def visitAssignExpr(self, ctx:ParserParser.AssignExprContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by ParserParser#BraceExpr.
     def visitBraceExpr(self, ctx:ParserParser.BraceExprContext):
         return self.visitChildren(ctx)
@@ -101,6 +96,11 @@ class ParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ParserParser#FalseExpr.
     def visitFalseExpr(self, ctx:ParserParser.FalseExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ParserParser#AssignExpr.
+    def visitAssignExpr(self, ctx:ParserParser.AssignExprContext):
         return self.visitChildren(ctx)
 
 

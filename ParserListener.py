@@ -143,15 +143,6 @@ class ParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ParserParser#AssignExpr.
-    def enterAssignExpr(self, ctx:ParserParser.AssignExprContext):
-        pass
-
-    # Exit a parse tree produced by ParserParser#AssignExpr.
-    def exitAssignExpr(self, ctx:ParserParser.AssignExprContext):
-        pass
-
-
     # Enter a parse tree produced by ParserParser#BraceExpr.
     def enterBraceExpr(self, ctx:ParserParser.BraceExprContext):
         pass
@@ -176,6 +167,15 @@ class ParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by ParserParser#FalseExpr.
     def exitFalseExpr(self, ctx:ParserParser.FalseExprContext):
+        pass
+
+
+    # Enter a parse tree produced by ParserParser#AssignExpr.
+    def enterAssignExpr(self, ctx:ParserParser.AssignExprContext):
+        pass
+
+    # Exit a parse tree produced by ParserParser#AssignExpr.
+    def exitAssignExpr(self, ctx:ParserParser.AssignExprContext):
         pass
 
 

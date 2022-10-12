@@ -183,18 +183,6 @@ public interface ParserListener extends ParseTreeListener {
 	 */
 	void exitAddExpr(ParserParser.AddExprContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code AssignExpr}
-	 * labeled alternative in {@link ParserParser#expr}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssignExpr(ParserParser.AssignExprContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code AssignExpr}
-	 * labeled alternative in {@link ParserParser#expr}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssignExpr(ParserParser.AssignExprContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code BraceExpr}
 	 * labeled alternative in {@link ParserParser#expr}.
 	 * @param ctx the parse tree
@@ -230,6 +218,18 @@ public interface ParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFalseExpr(ParserParser.FalseExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code AssignExpr}
+	 * labeled alternative in {@link ParserParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssignExpr(ParserParser.AssignExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code AssignExpr}
+	 * labeled alternative in {@link ParserParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssignExpr(ParserParser.AssignExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MethodDotExpr}
 	 * labeled alternative in {@link ParserParser#expr}.
