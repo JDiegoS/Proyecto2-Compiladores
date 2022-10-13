@@ -9,6 +9,8 @@ class IntermediateCode(ParserVisitor):
         self.table = table
         self.code = []
         self.quads = Quadruple()
+        self.tempOp = []
+        self.temps = []
     
     def getTable(self):
         print(str(self.table))
@@ -46,27 +48,83 @@ class IntermediateCode(ParserVisitor):
             
     def visitAssignFeature(self, ctx:ParserParser.AssignFeatureContext):
         print("hola")
-
+        children = list(map(lambda x: x.getText(), ctx.children))
+        name = children[0]
+        variable = self.getAttribute(name)
         if (ctx.right != None):
             if (len(ctx.right.getText()) > 0):
 
-                l = ctx.left.text
-                r = self.visit(ctx.right)
+                operaciones = ['-', '+', '*', '/', '~']
+                self.visitChildren(ctx)
+                if len(self.tempOp) > 0:
+                    for i in self.tempOp:
 
-                if (l != r):
-                        print("ERROR: No corresponden los tipos de la asignacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                        self.errors.append("ERROR: No corresponden los tipos de la asignacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-        return self.visitChildren(ctx)
+                        i[4] = i[4].replace('(', '').replace(')', '')
+                        if not any(op in i[0] for op in operaciones):
+                            i[0] = 't' + str(self.quads.temp)
+                            self.temps.append(['t' + str(self.quads.temp), i[1]])
+                            self.quads.newTemp()
+                        else:
+                            for j in self.temps:
+                                if i[4] ==  j[1]:
+                                    i[4] = j[0]
+                                if i[0] == j[1]:
+                                    i[3] = j[0]
+                                    i[0] = 't' + str(self.quads.temp)
+                                    
+                            self.temps.append([i[0], i[1]])
+                            self.quads.newTemp()
+                        self.quads.generateQuadruple(i[2], i[3], i[4], i[0])    
+                        
+                    self.tempOp = []
+                    print('')
+
+
+                    
+                    self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
+                else:
+                    self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
+        else:
+            self.quads.generateQuadruple('', '', '', 'd[' + str(variable['address']) + ']')
+        print(self.quads.quadTable)
+        
+        return 
     
     def visitAssignExpr(self, ctx:ParserParser.AssignExprContext):
-        childs = self.visitChildren(ctx)
-        if (len(childs) > 1):
-            self.quads.generateQuadruple(childs[0], childs[1], childs[2], 't' + str(self.quads.temps))
+        children = list(map(lambda x: x.getText(), ctx.children))
+        name = children[0]
+        variable = self.getAttribute(name)
+        operaciones = ['-', '+', '*', '/', '~']
+        self.visitChildren(ctx)
+        if len(self.tempOp) > 0:
+            for i in self.tempOp:
+
+                i[4] = i[4].replace('(', '').replace(')', '')
+                if not any(op in i[0] for op in operaciones):
+                    i[0] = 't' + str(self.quads.temp)
+                    self.temps.append(['t' + str(self.quads.temp), i[1]])
+                    self.quads.newTemp()
+                else:
+                    for j in self.temps:
+                        if i[4] ==  j[1]:
+                            i[4] = j[0]
+                        if i[0] == j[1]:
+                            i[3] = j[0]
+                            i[0] = 't' + str(self.quads.temp)
+                            
+                    self.temps.append([i[0], i[1]])
+                    self.quads.newTemp()
+                self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
+                
+                
+            self.tempOp = []
+            self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
+
         else:
-            self.quads.generateQuadruple(childs[0], childs[1], '', 't' + str(self.quads.temps))
-        self.quads.newTemp()
-        #print(self.quads.quadTable)
-        return self.visitChildren(ctx)
+            self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
+        print('')
+        print(self.quads.quadTable)
+        return
 
     
     def visitMethodFeature(self, ctx):
@@ -90,7 +148,7 @@ class IntermediateCode(ParserVisitor):
         r = self.visit(ctx.right)
         if r is None:
             r = ctx.right.getText()
-        return ['add', l, r]
+        return self.tempOp.append([ctx.left.getText(), ctx.getText(), 'add', l, r])
     
     def visitMulExpr(self, ctx):
         l = self.visit(ctx.left)
@@ -99,7 +157,7 @@ class IntermediateCode(ParserVisitor):
         r = self.visit(ctx.right)
         if r is None:
             r = ctx.right.getText()
-        return ['mult', l, r]
+        return self.tempOp.append([ctx.left.getText(),ctx.getText(), 'mult', l, r])
 
     def visitMinusExpr(self, ctx):
         l = self.visit(ctx.left)
@@ -108,7 +166,7 @@ class IntermediateCode(ParserVisitor):
         r = self.visit(ctx.right)
         if r is None:
             r = ctx.right.getText()
-        return ['sub', l, r]
+        return self.tempOp.append([ctx.left.getText(),ctx.getText(), 'sub', l, r])
 
     def visitDivExpr(self, ctx):
         l = self.visit(ctx.left)
@@ -117,9 +175,12 @@ class IntermediateCode(ParserVisitor):
         r = self.visit(ctx.right)
         if r is None:
             r = ctx.right.getText()
-        return ['div', l, r]
+        return self.tempOp.append([ctx.left.getText(),ctx.getText(), 'div', l, r])
 
 
+    def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
+        return self.visit(ctx.children[1])
+    
     def visitNegExpr(self, ctx):
         r = self.visit(ctx.right)
         if r == 'ID':
@@ -212,8 +273,6 @@ class IntermediateCode(ParserVisitor):
             if methodType == 'SELF_TYPE':
                 methodType = exprType
             return methodType
-         
-
     
     def visitMethodParenExpr(self, ctx):
         attr = self.getAttribute(self.current_scope)
