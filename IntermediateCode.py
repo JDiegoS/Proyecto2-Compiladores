@@ -93,13 +93,31 @@ class IntermediateCode(ParserVisitor):
         return ['add', l, r]
     
     def visitMulExpr(self, ctx):
-        return ['mult', ctx.left.getText(), ctx.right.getText()]
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return ['mult', l, r]
 
     def visitMinusExpr(self, ctx):
-        return ['sub', ctx.left.getText(), ctx.right.getText()]
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return ['sub', l, r]
 
     def visitDivExpr(self, ctx):
-        return ['div', ctx.left.getText(), ctx.right.getText()]
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return ['div', l, r]
 
 
     def visitNegExpr(self, ctx):
