@@ -358,7 +358,8 @@ class MyVisitor(ParserVisitor):
                 methodType = exprType
             return methodType
          
-
+    def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
+        return self.visit(ctx.children[1])
     
     def visitMethodParenExpr(self, ctx):
         attr = self.getAttribute(self.current_scope)

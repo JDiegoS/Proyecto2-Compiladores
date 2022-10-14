@@ -1,10 +1,13 @@
 class Main {
+   a : Int;
+   d : Int;
+   c : Int;
+    b : Bool <- false;
 
     main() : SELF_TYPE {
         {
-            if 1<2 then c <- 3+4 else c <- 5*6 fi;
-            a <- 1+2;
 
+            while not (a = b) loop  a <- c  pool;
         }
     } ;
 

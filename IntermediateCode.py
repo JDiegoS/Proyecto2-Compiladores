@@ -47,7 +47,6 @@ class IntermediateCode(ParserVisitor):
         return 
             
     def visitAssignFeature(self, ctx:ParserParser.AssignFeatureContext):
-        print("hola")
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
         variable = self.getAttribute(name)
@@ -77,9 +76,6 @@ class IntermediateCode(ParserVisitor):
                         self.quads.generateQuadruple(i[2], i[3], i[4], i[0])    
                         
                     self.tempOp = []
-                    print('')
-
-
                     
                     self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
                 else:
@@ -87,6 +83,7 @@ class IntermediateCode(ParserVisitor):
         else:
             self.quads.generateQuadruple('', '', '', 'd[' + str(variable['address']) + ']')
         print(self.quads.quadTable)
+        print('')
         
         return 
     
@@ -124,8 +121,8 @@ class IntermediateCode(ParserVisitor):
 
         else:
             self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
-        print('')
         print(self.quads.quadTable)
+        print('')
         return
 
     
@@ -207,15 +204,28 @@ class IntermediateCode(ParserVisitor):
         return self.tempOp.append([ctx.left.getText(), ctx.getText(), 'blt', l, r])
 
     def visitIfThenExpr(self, ctx:ParserParser.IfThenExprContext):
-        #self.visitChildren(ctx)
         self.visit(ctx.first)
+                
         for i in self.tempOp:
-            self.quads.generateQuadruple(i[2], i[3], i[4], 't' + str(self.quads.temp))
-            self.quads.generateQuadruple('IFFALSE', 't' + str(self.quads.temp), '', 'L' + str(self.quads.loop+ 1))
-            self.quads.newTemp()
-            self.quads.newLoop()
-        print(self.tempOp)
-        print('second')
+            i[0] = i[0].replace('(', '').replace(')', '')
+            i[3] = i[3].replace('(', '').replace(')', '')
+            if not any(op in i[0] for op in ('<', '<=', '=')):
+                    i[0] = 't' + str(self.quads.temp)
+                    self.temps.append(['t' + str(self.quads.temp), i[1]])
+                    self.quads.newTemp()
+            else:
+                for j in self.temps:
+                    if i[0] == j[1]:
+                        i[3] = j[0]
+                        i[0] = 't' + str(self.quads.temp)
+                        
+                self.temps.append([i[0], i[1]])
+                self.quads.newTemp()
+            
+            self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
+
+            
+        self.quads.generateQuadruple('IFFALSE', 't' + str(self.quads.temp-1), '', 'L' + str(self.quads.loop))
         self.tempOp = []
 
         self.visit(ctx.second)
@@ -227,38 +237,49 @@ class IntermediateCode(ParserVisitor):
         self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
 
 
-        print(self.quads.quadTable)
         return
-        if len(self.tempOp) > 0:
-            for i in self.tempOp:
+    
+    def visitWhileExpr(self, ctx:ParserParser.WhileExprContext):
+        self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
+        self.quads.newLoop()
 
-                i[4] = i[4].replace('(', '').replace(')', '')
-                if not any(op in i[0] for op in operaciones):
+        self.visit(ctx.left)
+        print('')
+
+        for i in self.tempOp:
+            i[0] = i[0].replace('(', '').replace(')', '')
+            i[3] = i[3].replace('(', '').replace(')', '')
+            if not any(op in i[0] for op in ('<', '<=', '=')):
                     i[0] = 't' + str(self.quads.temp)
                     self.temps.append(['t' + str(self.quads.temp), i[1]])
                     self.quads.newTemp()
-                else:
-                    for j in self.temps:
-                        if i[4] ==  j[1]:
-                            i[4] = j[0]
-                        if i[0] == j[1]:
-                            i[3] = j[0]
-                            i[0] = 't' + str(self.quads.temp)
-                            
-                    self.temps.append([i[0], i[1]])
-                    self.quads.newTemp()
-                self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
-                
-                
-            self.tempOp = []
-            self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
+            else:
+                for j in self.temps:
+                    if i[0] == j[1]:
+                        i[3] = j[0]
+                        i[0] = 't' + str(self.quads.temp)
+                        
+                self.temps.append([i[0], i[1]])
+                self.quads.newTemp()
+            
+            print(self.tempOp)
+            print(self.temps)
+            self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
 
-        else:
-            self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
-        print('')
+            
+        self.quads.generateQuadruple('IFFALSE', 't' + str(self.quads.temp-1), '', 'L' + str(self.quads.loop))
+        self.tempOp = []
+
+        self.visit(ctx.right)
+        self.quads.generateQuadruple('goto', '', '', 'L' + str(self.quads.loop - 1))
+        self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
+        self.quads.newLoop()
+
         print(self.quads.quadTable)
+        print('')
         return
-    
+
+
     def visitNewExpr(self, ctx):
         return ctx.right.text
 
@@ -267,27 +288,15 @@ class IntermediateCode(ParserVisitor):
     
     def visitNegExpr(self, ctx):
         r = self.visit(ctx.right)
-        if r == 'ID':
-            id = self.getAttribute(ctx.right.getText())
-            r = id['type']
-        if (r != 'Int'):
-            print("ERROR: No corresponden los tipos de la negacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: No corresponden los tipos de la negacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-
-            return 'Error'
-        return 'Int'
+        if r is None:
+            r = ctx.right.getText()
+        return self.tempOp.append([ctx.right.getText(), ctx.getText(), 'mult', '-1', r])
 
     def visitNotExpr(self, ctx):
         r = self.visit(ctx.right)
-        if r == 'ID':
-            id = self.getAttribute(ctx.right.getText())
-            r = id['type']
-        if (r != 'Bool'):
-            print("ERROR: No corresponden los tipos del not\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText().replace('not', 'not ')))
-            self.errors.append("ERROR: No corresponden los tipos del not\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText().replace('not', 'not ')))
-
-            return 'Error'
-        return 'Bool'
+        if r is None:
+            r = ctx.right.getText()
+        return self.tempOp.append([ctx.right.getText(), ctx.getText(), 'not', r, ''])
 
     def visitMethodDotExpr(self, ctx):
 
