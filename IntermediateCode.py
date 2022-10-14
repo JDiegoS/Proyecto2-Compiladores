@@ -93,12 +93,14 @@ class IntermediateCode(ParserVisitor):
         variable = self.getAttribute(name)
         if variable == None:
             variable = {'address': -1}
-        operaciones = ['-', '+', '*', '/', '~']
+        operaciones = ['-', '+', '*', '/', '~', '<', '<=', '=']
         self.visitChildren(ctx)
         if len(self.tempOp) > 0:
             for i in self.tempOp:
 
                 i[4] = i[4].replace('(', '').replace(')', '')
+                i[0] = i[0].replace('(', '').replace(')', '')
+                i[3] = i[3].replace('(', '').replace(')', '')
                 if not any(op in i[0] for op in operaciones):
                     i[0] = 't' + str(self.quads.temp)
                     self.temps.append(['t' + str(self.quads.temp), i[1]])

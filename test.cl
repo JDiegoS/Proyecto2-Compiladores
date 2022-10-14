@@ -7,7 +7,7 @@ class Main {
     main() : SELF_TYPE {
         {
 
-            while not (a = b) loop  a <- c  pool;
+           a <- 1*2 + 2 + 3 + (3-4);
         }
     } ;
 
