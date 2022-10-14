@@ -629,20 +629,22 @@ class ParserParser ( Parser ):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ParserParser.ExprContext
             super().__init__(parser)
+            self.left = None # ExprContext
+            self.right = None # ExprContext
             self.copyFrom(ctx)
 
         def WHILE(self):
             return self.getToken(ParserParser.WHILE, 0)
+        def LOOP(self):
+            return self.getToken(ParserParser.LOOP, 0)
+        def POOL(self):
+            return self.getToken(ParserParser.POOL, 0)
         def expr(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(ParserParser.ExprContext)
             else:
                 return self.getTypedRuleContext(ParserParser.ExprContext,i)
 
-        def LOOP(self):
-            return self.getToken(ParserParser.LOOP, 0)
-        def POOL(self):
-            return self.getToken(ParserParser.POOL, 0)
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterWhileExpr" ):
@@ -767,22 +769,25 @@ class ParserParser ( Parser ):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ParserParser.ExprContext
             super().__init__(parser)
+            self.first = None # ExprContext
+            self.second = None # ExprContext
+            self.third = None # ExprContext
             self.copyFrom(ctx)
 
         def IF(self):
             return self.getToken(ParserParser.IF, 0)
-        def expr(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(ParserParser.ExprContext)
-            else:
-                return self.getTypedRuleContext(ParserParser.ExprContext,i)
-
         def THEN(self):
             return self.getToken(ParserParser.THEN, 0)
         def ELSE(self):
             return self.getToken(ParserParser.ELSE, 0)
         def FI(self):
             return self.getToken(ParserParser.FI, 0)
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(ParserParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(ParserParser.ExprContext,i)
+
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterIfThenExpr" ):
@@ -803,6 +808,9 @@ class ParserParser ( Parser ):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ParserParser.ExprContext
             super().__init__(parser)
+            self.first = None # ExprContext
+            self.second = None # ExprContext
+            self.third = None # ExprContext
             self.copyFrom(ctx)
 
         def LET(self):
@@ -989,6 +997,7 @@ class ParserParser ( Parser ):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ParserParser.ExprContext
             super().__init__(parser)
+            self.right = None # ExprContext
             self.copyFrom(ctx)
 
         def ISVOID(self):
@@ -1337,15 +1346,16 @@ class ParserParser ( Parser ):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ParserParser.ExprContext
             super().__init__(parser)
+            self.right = None # ExprContext
             self.copyFrom(ctx)
 
         def LPAREN(self):
             return self.getToken(ParserParser.LPAREN, 0)
+        def RPAREN(self):
+            return self.getToken(ParserParser.RPAREN, 0)
         def expr(self):
             return self.getTypedRuleContext(ParserParser.ExprContext,0)
 
-        def RPAREN(self):
-            return self.getToken(ParserParser.RPAREN, 0)
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterParenExpr" ):
@@ -1450,15 +1460,15 @@ class ParserParser ( Parser ):
                 self.state = 87
                 self.match(ParserParser.IF)
                 self.state = 88
-                self.expr(0)
+                localctx.first = self.expr(0)
                 self.state = 89
                 self.match(ParserParser.THEN)
                 self.state = 90
-                self.expr(0)
+                localctx.second = self.expr(0)
                 self.state = 91
                 self.match(ParserParser.ELSE)
                 self.state = 92
-                self.expr(0)
+                localctx.third = self.expr(0)
                 self.state = 93
                 self.match(ParserParser.FI)
                 pass
@@ -1470,11 +1480,11 @@ class ParserParser ( Parser ):
                 self.state = 95
                 self.match(ParserParser.WHILE)
                 self.state = 96
-                self.expr(0)
+                localctx.left = self.expr(0)
                 self.state = 97
                 self.match(ParserParser.LOOP)
                 self.state = 98
-                self.expr(0)
+                localctx.right = self.expr(0)
                 self.state = 99
                 self.match(ParserParser.POOL)
                 pass
@@ -1522,7 +1532,7 @@ class ParserParser ( Parser ):
                     self.state = 115
                     self.match(ParserParser.ASSIGN)
                     self.state = 116
-                    self.expr(0)
+                    localctx.first = self.expr(0)
 
 
                 self.state = 129
@@ -1544,7 +1554,7 @@ class ParserParser ( Parser ):
                         self.state = 123
                         self.match(ParserParser.ASSIGN)
                         self.state = 124
-                        self.expr(0)
+                        localctx.second = self.expr(0)
 
 
                     self.state = 131
@@ -1554,7 +1564,7 @@ class ParserParser ( Parser ):
                 self.state = 132
                 self.match(ParserParser.IN)
                 self.state = 133
-                self.expr(19)
+                localctx.third = self.expr(19)
                 pass
 
             elif la_ == 6:
@@ -1584,7 +1594,7 @@ class ParserParser ( Parser ):
                 self.state = 138
                 self.match(ParserParser.ISVOID)
                 self.state = 139
-                self.expr(16)
+                localctx.right = self.expr(16)
                 pass
 
             elif la_ == 9:
@@ -1594,7 +1604,7 @@ class ParserParser ( Parser ):
                 self.state = 140
                 self.match(ParserParser.LPAREN)
                 self.state = 141
-                self.expr(0)
+                localctx.right = self.expr(0)
                 self.state = 142
                 self.match(ParserParser.RPAREN)
                 pass

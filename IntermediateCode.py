@@ -94,6 +94,8 @@ class IntermediateCode(ParserVisitor):
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
         variable = self.getAttribute(name)
+        if variable == None:
+            variable = {'address': -1}
         operaciones = ['-', '+', '*', '/', '~']
         self.visitChildren(ctx)
         if len(self.tempOp) > 0:
@@ -176,7 +178,89 @@ class IntermediateCode(ParserVisitor):
         if r is None:
             r = ctx.right.getText()
         return self.tempOp.append([ctx.left.getText(),ctx.getText(), 'div', l, r])
+ 
+    def visitEqualsExpr(self, ctx:ParserParser.EqualsExprContext):
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return self.tempOp.append([ctx.left.getText(), ctx.getText(), 'beq', l, r])
+    
+    def visitLequalExpr(self, ctx):
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return self.tempOp.append([ctx.left.getText(), ctx.getText(), 'ble', l, r])
 
+    def visitLtExpr(self, ctx:ParserParser.LtExprContext):
+        l = self.visit(ctx.left)
+        if l is None:
+            l = ctx.left.getText()
+        r = self.visit(ctx.right)
+        if r is None:
+            r = ctx.right.getText()
+        return self.tempOp.append([ctx.left.getText(), ctx.getText(), 'blt', l, r])
+
+    def visitIfThenExpr(self, ctx:ParserParser.IfThenExprContext):
+        #self.visitChildren(ctx)
+        self.visit(ctx.first)
+        for i in self.tempOp:
+            self.quads.generateQuadruple(i[2], i[3], i[4], 't' + str(self.quads.temp))
+            self.quads.generateQuadruple('IFFALSE', 't' + str(self.quads.temp), '', 'L' + str(self.quads.loop+ 1))
+            self.quads.newTemp()
+            self.quads.newLoop()
+        print(self.tempOp)
+        print('second')
+        self.tempOp = []
+
+        self.visit(ctx.second)
+        self.quads.generateQuadruple('goto', '', '', 'L' + str(self.quads.loop + 1))
+        self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
+        self.quads.newLoop()
+
+        self.visit(ctx.third)
+        self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
+
+
+        print(self.quads.quadTable)
+        return
+        if len(self.tempOp) > 0:
+            for i in self.tempOp:
+
+                i[4] = i[4].replace('(', '').replace(')', '')
+                if not any(op in i[0] for op in operaciones):
+                    i[0] = 't' + str(self.quads.temp)
+                    self.temps.append(['t' + str(self.quads.temp), i[1]])
+                    self.quads.newTemp()
+                else:
+                    for j in self.temps:
+                        if i[4] ==  j[1]:
+                            i[4] = j[0]
+                        if i[0] == j[1]:
+                            i[3] = j[0]
+                            i[0] = 't' + str(self.quads.temp)
+                            
+                    self.temps.append([i[0], i[1]])
+                    self.quads.newTemp()
+                self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
+                
+                
+            self.tempOp = []
+            self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
+
+        else:
+            self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
+        print('')
+        print(self.quads.quadTable)
+        return
+    
+    def visitNewExpr(self, ctx):
+        return ctx.right.text
 
     def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
         return self.visit(ctx.children[1])
@@ -204,43 +288,6 @@ class IntermediateCode(ParserVisitor):
 
             return 'Error'
         return 'Bool'
- 
-    def visitEqualsExpr(self, ctx:ParserParser.EqualsExprContext):
-        l = self.visit(ctx.left)
-        r = self.visit(ctx.right)
-
-        if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
-            print("ERROR: No corresponden los tipos de la comparacion =\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: No corresponden los tipos de la comparacion =\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-
-            return 'Error'
-        return 'Bool'
-    
-    def visitLequalExpr(self, ctx):
-        l = self.visit(ctx.left)
-        r = self.visit(ctx.right)
-
-        if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
-            print("ERROR: No corresponden los tipos de la comparacion <=\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: No corresponden los tipos de la comparacion <=\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-
-            return 'Error'
-        return 'Bool'
-
-    def visitLtExpr(self, ctx:ParserParser.LtExprContext):
-        l = self.visit(ctx.left)
-        r = self.visit(ctx.right)
-        
-
-        if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
-            print("ERROR: No corresponden los tipos de la comparacion <\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: No corresponden los tipos de la comparacion <\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-
-            return 'Error'
-        return 'Bool'
-
-    def visitNewExpr(self, ctx):
-        return ctx.right.text
 
     def visitMethodDotExpr(self, ctx):
 

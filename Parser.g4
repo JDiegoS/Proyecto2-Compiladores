@@ -12,14 +12,14 @@ param: ID COLON TYPE;
 expr: 
     name=ID LPAREN (first=expr (COMMA second=expr)*)* RPAREN        # MethodParenExpr
     | left=expr (AT TYPE)? PERIOD name=ID LPAREN (first=expr (COMMA second=expr)*)* RPAREN        # MethodDotExpr
-    | IF expr THEN expr ELSE expr FI        # IfThenExpr
-    | WHILE expr LOOP expr POOL        # WhileExpr
+    | IF first=expr THEN second=expr ELSE third=expr FI        # IfThenExpr
+    | WHILE left=expr LOOP right=expr POOL        # WhileExpr
     | LBRACE (expr SEMICOLON)+ RBRACE        # BraceExpr
-    | LET ID COLON TYPE (ASSIGN expr)? (COMMA ID COLON TYPE (ASSIGN expr)?)* IN expr        # LetExpr
+    | LET ID COLON TYPE (ASSIGN first=expr)? (COMMA ID COLON TYPE (ASSIGN second=expr)?)* IN third=expr        # LetExpr
     | NEW right=TYPE        # NewExpr
     | NEG right=expr        # NegExpr
-    | ISVOID expr        # IsvoidExpr
-    | LPAREN expr RPAREN        # ParenExpr
+    | ISVOID right=expr        # IsvoidExpr
+    | LPAREN right=expr RPAREN        # ParenExpr
     | left=expr MUL right=expr        # MulExpr
     | left=expr DIV right=expr        # DivExpr
     | left=expr ADD right=expr        # AddExpr

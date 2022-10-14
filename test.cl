@@ -1,13 +1,9 @@
 class Main {
-   a : Int <- 1 * 5;
-    b : Bool <- false;
-    c : String <- "Hola"; 
-    c : Int; 
 
     main() : SELF_TYPE {
         {
+            if 1<2 then c <- 3+4 else c <- 5*6 fi;
             a <- 1+2;
-            b<- b+c;
 
         }
     } ;

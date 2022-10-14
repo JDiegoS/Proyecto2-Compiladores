@@ -479,15 +479,17 @@ public class ParserParser extends Parser {
 		}
 	}
 	public static class WhileExprContext extends ExprContext {
+		public ExprContext left;
+		public ExprContext right;
 		public TerminalNode WHILE() { return getToken(ParserParser.WHILE, 0); }
+		public TerminalNode LOOP() { return getToken(ParserParser.LOOP, 0); }
+		public TerminalNode POOL() { return getToken(ParserParser.POOL, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode LOOP() { return getToken(ParserParser.LOOP, 0); }
-		public TerminalNode POOL() { return getToken(ParserParser.POOL, 0); }
 		public WhileExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
@@ -555,16 +557,19 @@ public class ParserParser extends Parser {
 		}
 	}
 	public static class IfThenExprContext extends ExprContext {
+		public ExprContext first;
+		public ExprContext second;
+		public ExprContext third;
 		public TerminalNode IF() { return getToken(ParserParser.IF, 0); }
+		public TerminalNode THEN() { return getToken(ParserParser.THEN, 0); }
+		public TerminalNode ELSE() { return getToken(ParserParser.ELSE, 0); }
+		public TerminalNode FI() { return getToken(ParserParser.FI, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode THEN() { return getToken(ParserParser.THEN, 0); }
-		public TerminalNode ELSE() { return getToken(ParserParser.ELSE, 0); }
-		public TerminalNode FI() { return getToken(ParserParser.FI, 0); }
 		public IfThenExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
@@ -576,6 +581,9 @@ public class ParserParser extends Parser {
 		}
 	}
 	public static class LetExprContext extends ExprContext {
+		public ExprContext first;
+		public ExprContext second;
+		public ExprContext third;
 		public TerminalNode LET() { return getToken(ParserParser.LET, 0); }
 		public List<TerminalNode> ID() { return getTokens(ParserParser.ID); }
 		public TerminalNode ID(int i) {
@@ -694,6 +702,7 @@ public class ParserParser extends Parser {
 		}
 	}
 	public static class IsvoidExprContext extends ExprContext {
+		public ExprContext right;
 		public TerminalNode ISVOID() { return getToken(ParserParser.ISVOID, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
@@ -899,11 +908,12 @@ public class ParserParser extends Parser {
 		}
 	}
 	public static class ParenExprContext extends ExprContext {
+		public ExprContext right;
 		public TerminalNode LPAREN() { return getToken(ParserParser.LPAREN, 0); }
+		public TerminalNode RPAREN() { return getToken(ParserParser.RPAREN, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode RPAREN() { return getToken(ParserParser.RPAREN, 0); }
 		public ParenExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
@@ -1006,15 +1016,15 @@ public class ParserParser extends Parser {
 				setState(87);
 				match(IF);
 				setState(88);
-				expr(0);
+				((IfThenExprContext)_localctx).first = expr(0);
 				setState(89);
 				match(THEN);
 				setState(90);
-				expr(0);
+				((IfThenExprContext)_localctx).second = expr(0);
 				setState(91);
 				match(ELSE);
 				setState(92);
-				expr(0);
+				((IfThenExprContext)_localctx).third = expr(0);
 				setState(93);
 				match(FI);
 				}
@@ -1027,11 +1037,11 @@ public class ParserParser extends Parser {
 				setState(95);
 				match(WHILE);
 				setState(96);
-				expr(0);
+				((WhileExprContext)_localctx).left = expr(0);
 				setState(97);
 				match(LOOP);
 				setState(98);
-				expr(0);
+				((WhileExprContext)_localctx).right = expr(0);
 				setState(99);
 				match(POOL);
 				}
@@ -1084,7 +1094,7 @@ public class ParserParser extends Parser {
 					setState(115);
 					match(ASSIGN);
 					setState(116);
-					expr(0);
+					((LetExprContext)_localctx).first = expr(0);
 					}
 				}
 
@@ -1110,7 +1120,7 @@ public class ParserParser extends Parser {
 						setState(123);
 						match(ASSIGN);
 						setState(124);
-						expr(0);
+						((LetExprContext)_localctx).second = expr(0);
 						}
 					}
 
@@ -1123,7 +1133,7 @@ public class ParserParser extends Parser {
 				setState(132);
 				match(IN);
 				setState(133);
-				expr(19);
+				((LetExprContext)_localctx).third = expr(19);
 				}
 				break;
 			case 6:
@@ -1156,7 +1166,7 @@ public class ParserParser extends Parser {
 				setState(138);
 				match(ISVOID);
 				setState(139);
-				expr(16);
+				((IsvoidExprContext)_localctx).right = expr(16);
 				}
 				break;
 			case 9:
@@ -1167,7 +1177,7 @@ public class ParserParser extends Parser {
 				setState(140);
 				match(LPAREN);
 				setState(141);
-				expr(0);
+				((ParenExprContext)_localctx).right = expr(0);
 				setState(142);
 				match(RPAREN);
 				}
