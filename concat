@@ -4,11 +4,12 @@ class Main{
       concat : String;
       output : String;
 
-      main(): SELF_TYPE {{
+      main(a:Int): SELF_TYPE {{
         input <- (i.in_string());
         concat <- (input.concat("Hola Mundo\n"));
         i.out_string(concat);
         (new Main).main();
+        concat("lol");
       }};
 
 };
