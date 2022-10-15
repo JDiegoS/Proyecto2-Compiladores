@@ -89,12 +89,16 @@ class Compiler(object):
 
         visitor = IntermediateCode(finalTable.table)
         visitor.visit(tree)
+        code = visitor.writeCode()
+
+        for i in code:
+            print(i)
 
     
 
     
 
     
-text=open('test.cl').read()
+text=open('concat').read()
 main = Compiler()
-main.compile('test.cl', text)
+main.compile('concat', text)

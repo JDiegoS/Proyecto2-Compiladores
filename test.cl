@@ -7,7 +7,7 @@ class Main {
     main() : SELF_TYPE {
         {
 
-           a <- 1*2 + 2 + 3 + (3-4);
+            if not (a < b) then c <- (c + b) else c <- (d + b) fi;
         }
     } ;
 

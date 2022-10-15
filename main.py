@@ -2,7 +2,7 @@ import PyQt5.QtWidgets as qtw
 import PyQt5.QtGui as qtg
 from CodeEditor import QCodeEditor
 from ScrollLabel import ScrollLabel
-# from Compiler import Compiler, MyVisitor, MyListener
+from Compiler import Compiler
 
 class MainWindow(qtw.QWidget):
 
@@ -79,12 +79,12 @@ class MainWindow(qtw.QWidget):
             f = open(self.currentFile, "w")
             f.write(codeEditor.toPlainText())
             f.close()
-            # compiler = Compiler()
-            # compiler.compile(self.currentFile, codeEditor.toPlainText())
+            compiler = Compiler()
+            compiler.compile(self.currentFile, codeEditor.toPlainText())
             errorText = '''Consola\n
             '''
-            # for i in compiler.errors:
-            #     errorText += i + '\n'
+            for i in compiler.errors:
+                errorText += i + '\n'
             label_2.setText(errorText)
 
             # ! TODO: APPEND STRING OF INTERMEDIATE CODE IF ANY, OTHERWISE WILL BE NONE

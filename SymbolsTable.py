@@ -59,7 +59,7 @@ class SymbolTable:
         elif type == 'Bool':
             self.offset += 1
             return 1
-        elif type == 'Object' or type == 'SELF_TYPE':
+        else:
             self.offset += 100
             return 100
 

@@ -35,6 +35,7 @@ class MyListener(ParserListener):
         self.symbol_table.insert(name, typ, kind, scope, line)
 
     def insert_feature(self, ctx: ParserParser.FeatureContext):
+
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
         kind = METHOD if children[1] != ':' else ATTR
@@ -50,6 +51,8 @@ class MyListener(ParserListener):
             index = indx(children, '<-')
             if index != -1:
                 value = children[index + 1]
+                if value.find('"') == -1 and value.find('new') != -1:
+                    typ = value.split('new')[1]
 
         self.symbol_table.insert(name, typ, kind, scope, line, value)
     
@@ -91,7 +94,8 @@ class MyListener(ParserListener):
 
     # Enter a parse tree produced by ParserParser#Param.
     def enterParam(self, ctx: ParserParser.ParamContext):
-        self.insert_param(ctx)
+        if len(ctx.children) > 2:
+            self.insert_param(ctx)
 
     # Enter a parse tree produced by ParserParser#expr.
     def enterExpr(self, ctx: ParserParser.ExprContext):

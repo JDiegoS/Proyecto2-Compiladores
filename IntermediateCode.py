@@ -15,43 +15,52 @@ class IntermediateCode(ParserVisitor):
     def getTable(self):
         print(str(self.table))
     
-    def getAttribute(self, name):
+    def getAttribute(self, name, line=None):
         for i in self.table:
             if i['name'] == name:
+                if line != None and i['line'] != line:
+                    continue
                 return i
         return None
-    
+
+    #Write code
+    def writeCode(self):
+        for i in self.quads.quadTable:
+            if i['op'] == 'not':
+                self.code.append(i['result'] + ' = ' + i['op'] + ' ' + i['arg1'])
+                continue
+            elif i['op'] == 'goto':
+                self.code.append(i['op'] + ' ' + i['result'])
+                continue
+            elif i['op'] == 'IFFALSE':
+                self.code.append(i['op'] + ' ' + i['arg1'] + ' goto ' + i['result'])
+                continue
+            elif i['op'] != '' and i['op'][0] == 'L':
+                self.code.append('')
+                self.code.append(i['op'] + ':')
+                continue
+
+            self.code.append(i['result'] + ' = ' + i['arg1'] + ' ' + i['op'] + ' ' + i['arg2'])
+        return self.code
     
     #Visits
     def visitClassDec(self, ctx):
-        if ctx.name.text == 'Main':
-            self.hasMain = True
-            if ctx.inherits != None:
-                self.errors.append("ERROR: La clase Main no puede heredar\n")
-                print("ERROR: La clase Main no puede heredar\n")
-                return self.visitChildren(ctx)
-        if ctx.inherits != None:
-            ''' Herencia multiple
-            if ',' in ctx.inherits.text or '.' in ctx.inherits.text:
-                self.errors.append("ERROR: No se permite la herencia multiple o recursiva\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                print("ERROR: No se permite la herencia multiple o recursiva\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                return self.visitChildren(ctx)
-                '''
-            if ctx.inherits.text not in self.types:
-                self.errors.append("ERROR: No se encontro la herencia '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.inherits.text, ctx.start.line, ctx.start.column, 'class ' + ctx.name.text + ' inherits ' + ctx.inherits.text))
-                print("ERROR: No se encontro la herencia '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.inherits.text, ctx.start.line, ctx.start.column, 'class ' + ctx.name.text + ' inherits ' + ctx.inherits.text))
-
-        self.current_scope = ctx.name.text
-        self.visitChildren(ctx)
-        self.current_scope = 'Global'
-        return 
+        
+        return self.visitChildren(ctx)
             
     def visitAssignFeature(self, ctx:ParserParser.AssignFeatureContext):
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
-        variable = self.getAttribute(name)
+        variable = self.getAttribute(name, ctx.start.line)
         if (ctx.right != None):
             if (len(ctx.right.getText()) > 0):
+
+                if ctx.right.getText().find('"') == -1 and ctx.right.getText().find('new') != -1:
+                    newVariable = self.getAttribute(ctx.right.getText().split('new')[1])
+                    if variable == None:
+                        newVariable = {'address': -1, 'size': 0, 'type': 'error'}
+                    self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['name']) + '>', 'd[' + str(variable['address']) + ']')
+                    return
 
                 operaciones = ['-', '+', '*', '/', '~']
                 self.visitChildren(ctx)
@@ -81,16 +90,14 @@ class IntermediateCode(ParserVisitor):
                 else:
                     self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
         else:
-            self.quads.generateQuadruple('', '', '', 'd[' + str(variable['address']) + ']')
-        print(self.quads.quadTable)
-        print('')
+            self.quads.generateQuadruple(str(variable['size']), 'allocate', '<' + str(variable['type']) + '>', 'd[' + str(variable['address']) + ']')
         
         return 
     
     def visitAssignExpr(self, ctx:ParserParser.AssignExprContext):
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
-        variable = self.getAttribute(name)
+        variable = self.getAttribute(name, ctx.start.line)
         if variable == None:
             variable = {'address': -1}
         operaciones = ['-', '+', '*', '/', '~', '<', '<=', '=']
@@ -121,23 +128,22 @@ class IntermediateCode(ParserVisitor):
             self.tempOp = []
             self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
 
+        elif ctx.right.getText().find('"') == -1 and ctx.right.getText().find('new') != -1:
+            newVariable = self.getAttribute(ctx.right.getText().split('new')[1])
+            if variable == None:
+                newVariable = {'address': -1, 'size': 0, 'type': 'error'}
+            self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['type']) + '>', 'd[' + str(newVariable['address']) + ']')
         else:
             self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
-        print(self.quads.quadTable)
-        print('')
         return
 
     
     def visitMethodFeature(self, ctx):
-        if ctx.name.text == 'main':
-            self.hasMainMethod = True
-            if ctx.parameter != None:
-                self.errors.append("ERROR: El metodo main no puede recibir parametros\n")
-                print("ERROR: El metodo main no puede recibir parametros\n")
+        
         return self.visitChildren(ctx)
 
     def visitIdExpr(self, ctx:ParserParser.IdExprContext):
-        addr = self.getAttribute(ctx.getText())
+        addr = self.getAttribute(ctx.getText(), ctx.start.line)
         if addr is None:
             return 'd[0]'
         return 'd[' + str(addr['address']) + ']'
@@ -234,9 +240,11 @@ class IntermediateCode(ParserVisitor):
         self.quads.generateQuadruple('goto', '', '', 'L' + str(self.quads.loop + 1))
         self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
         self.quads.newLoop()
+        self.tempOp = []
 
         self.visit(ctx.third)
         self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
+        self.tempOp = []
 
 
         return
@@ -246,7 +254,6 @@ class IntermediateCode(ParserVisitor):
         self.quads.newLoop()
 
         self.visit(ctx.left)
-        print('')
 
         for i in self.tempOp:
             i[0] = i[0].replace('(', '').replace(')', '')
@@ -264,8 +271,6 @@ class IntermediateCode(ParserVisitor):
                 self.temps.append([i[0], i[1]])
                 self.quads.newTemp()
             
-            print(self.tempOp)
-            print(self.temps)
             self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
 
             
@@ -277,8 +282,6 @@ class IntermediateCode(ParserVisitor):
         self.quads.generateQuadruple('L' + str(self.quads.loop), '', '', '')
         self.quads.newLoop()
 
-        print(self.quads.quadTable)
-        print('')
         return
 
 
@@ -333,59 +336,4 @@ class IntermediateCode(ParserVisitor):
             return methodType
     
     def visitMethodParenExpr(self, ctx):
-        attr = self.getAttribute(self.current_scope)
-        if attr != None:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and ((x['scope'] == self.current_scope) or x['scope'] == attr['type']), self.table))
-        else:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and (x['scope'] == self.current_scope), self.table))
-        if len(methodType) > 0: 
-            methodType = methodType[0]['type']
-        else:
-            methodType = 'Error'
-
-        if (ctx.name.text , 'method', self.current_scope) not in map(lambda x: (x['name'], x['kind'], x['scope']), self.table):
-            
-            if attr != None:
-                if (ctx.name.text, 'method', attr['type']) not in map(lambda x: (x['name'], x['kind'], x['scope']), self.table):
-                    print("ERROR: No se encontro el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
-                    self.errors.append("ERROR: No se encontro el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
-                    self.visitChildren(ctx)
-                    return methodType
-
-        paramFound = list(filter(lambda x: x['scope'] == ctx.name.text, self.table))
-        if len(paramFound) != 0 and ctx.first != None:
-            indexStart = ctx.getText().index('(')
-            if indexStart != -1:
-                params = ctx.getText()[indexStart+1:-1].split(',')
-                if len(params) != len(paramFound):
-                    
-                    print("ERROR: Cantidad de argumentos incorrecta\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                    self.errors.append("ERROR: Cantidad de argumentos incorrecta\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                    self.visitChildren(ctx)
-                    return methodType
-                paramNodes = []
-                i = 0
-                index = -2
-                while i != len(paramFound):
-                    paramNodes.append(ctx.children[index])
-                    index -= 2
-                    i += 1
-                paramNodes.reverse()
-                paramTypes = []
-                for i in paramNodes:
-                    val = i.getText()
-                    vType = 'Error'
-                    if val.isdigit():
-                        vType = "Int"
-                    elif val == 'true' or val == 'TRUE' or val == 'false' or val == 'FALSE':
-                        vType = "Bool"
-                    elif val.count('"') == 2:
-                        vType = "String"
-                    paramTypes.append(vType)
-
-                expectedTypes = list(map(lambda x: x['type'], paramFound))
-                if expectedTypes != paramTypes:
-                    print("ERROR: Tipo(s) de argumentos no coinciden con la definicion del metodo\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-                    self.errors.append("ERROR: Tipo(s) de argumentos no coinciden con la definicion del metodo\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-        self.visitChildren(ctx)
-        return methodType
+        return self.visitChildren(ctx)

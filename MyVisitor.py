@@ -19,9 +19,11 @@ class MyVisitor(ParserVisitor):
     def getTable(self):
         print(str(self.table))
     
-    def getAttribute(self, name):
+    def getAttribute(self, name, scope=None):
         for i in self.table:
             if i['name'] == name:
+                if scope != None and i['scope'] != scope:
+                    continue
                 return i
         return None
 
@@ -216,6 +218,21 @@ class MyVisitor(ParserVisitor):
         l = self.visit(ctx.left)
         r = self.visit(ctx.right)
 
+        if l == 'ID':
+            id = self.getAttribute(ctx.left.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            l = id['type']
+        if r == 'ID':
+            id = self.getAttribute(ctx.right.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            r = id['type']
+
         if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
             print("ERROR: No corresponden los tipos de la comparacion =\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: No corresponden los tipos de la comparacion =\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
@@ -227,6 +244,21 @@ class MyVisitor(ParserVisitor):
         l = self.visit(ctx.left)
         r = self.visit(ctx.right)
 
+        if l == 'ID':
+            id = self.getAttribute(ctx.left.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            l = id['type']
+        if r == 'ID':
+            id = self.getAttribute(ctx.right.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            r = id['type']
+
         if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
             print("ERROR: No corresponden los tipos de la comparacion <=\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: No corresponden los tipos de la comparacion <=\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
@@ -237,12 +269,27 @@ class MyVisitor(ParserVisitor):
     def visitLtExpr(self, ctx:ParserParser.LtExprContext):
         l = self.visit(ctx.left)
         r = self.visit(ctx.right)
+
+        if l == 'ID':
+            id = self.getAttribute(ctx.left.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            l = id['type']
+        if r == 'ID':
+            id = self.getAttribute(ctx.right.getText())
+            if id is None:
+                print("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                self.errors.append("ERROR: No se declaro la variable '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.right.getText(), ctx.right.start.line, ctx.right.start.column, ctx.getText()))
+                return
+            r = id['type']
         
 
         if (self.checkDifferentType(l, r, ctx.right.getText(), ctx.left.getText())):
             print("ERROR: No corresponden los tipos de la comparacion <\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: No corresponden los tipos de la comparacion <\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-
+            
             return 'Error'
         return 'Bool'
 
@@ -299,7 +346,8 @@ class MyVisitor(ParserVisitor):
             r = id['type']
 
         if (l != r):
-
+            print(l)
+            print(r)
             print("ERROR: No corresponden los tipos de la asignacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: No corresponden los tipos de la asignacion\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
 
@@ -325,15 +373,17 @@ class MyVisitor(ParserVisitor):
 
     def visitNewExpr(self, ctx):
         return ctx.right.text
+    
+    def visitBraceExpr(self, ctx:ParserParser.BraceExprContext):
+        return self.visitChildren(ctx)
 
     def visitMethodDotExpr(self, ctx):
-
         exprType = 'Error'
-        
-        expr = self.getAttribute(ctx.left.getText())
+        expr = self.getAttribute(ctx.left.getText(), self.current_scope)
         if expr != None:
             exprType = expr['type']
-
+        elif ctx.left.getText().find('new') != -1 and ctx.left.getText().find('"') == -1:
+            exprType = ctx.left.getText().split('new')[1]
         else:
             exprT = self.visit(ctx.left)
             if exprT == None:
@@ -342,9 +392,12 @@ class MyVisitor(ParserVisitor):
                     if temp != None:
                         exprType = temp
 
-
-
-        attr = self.getAttribute(exprType)
+        if exprType == 'Error':
+            print("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.start.line, ctx.start.column, ctx.getText()))
+            return
+        exprType = exprType.replace('(', '').replace(')', '')
+        attr = self.getAttribute(exprType, ctx.start.line)
         if attr != None:
             methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and ((x['scope'] == exprType) or x['scope'] == attr['type']), self.table))
         else:
@@ -357,10 +410,33 @@ class MyVisitor(ParserVisitor):
             if methodType == 'SELF_TYPE':
                 methodType = exprType
             return methodType
+        else:
+            print("ERROR: El atributo '%s' no contiene el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: El atributo '%s' no contiene el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
+            return 'Error'
          
     def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
         return self.visit(ctx.children[1])
     
+    def visitIfThenExpr(self, ctx:ParserParser.IfThenExprContext):
+        first = self.visit(ctx.first)
+        if first != 'Bool':
+            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+        self.visit(ctx.second)
+        self.visit(ctx.third)
+        return
+
+    def visitWhileExpr(self, ctx:ParserParser.WhileExprContext):
+        left = self.visit(ctx.left)
+        if left != 'Bool':
+            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+        self.visit(ctx.right)
+        return
+
+
+
     def visitMethodParenExpr(self, ctx):
         attr = self.getAttribute(self.current_scope)
         if attr != None:
@@ -410,6 +486,10 @@ class MyVisitor(ParserVisitor):
                         vType = "Bool"
                     elif val.count('"') == 2:
                         vType = "String"
+                    else:
+                        variable = self.getAttribute(val)
+                        if variable != None:
+                            vType = variable['type']
                     paramTypes.append(vType)
 
                 expectedTypes = list(map(lambda x: x['type'], paramFound))
