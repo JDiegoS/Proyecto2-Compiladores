@@ -60,10 +60,9 @@ class MainWindow(qtw.QWidget):
         label_2 = ScrollLabel()
         
         # setting text to the label
-        label_2.setText("Consola\n\n\n\n\n\n\n\n\n\n\n")
+        label_2.setText("Consola\n\n")
 
         f = label_2.font()
-        label_2.setFont(f)
 
         # Add label to layout
         self.layout().addWidget(label_2)
@@ -74,6 +73,10 @@ class MainWindow(qtw.QWidget):
         self.my_textFile.setFont(f)
         self.my_buttonFile.setFont(f)
         self.my_button.setFont(f)
+        label_2.setFont(f)
+        codeEditor.setFont(f)
+
+
 
         def compilar():
             f = open(self.currentFile, "w")
@@ -89,7 +92,9 @@ class MainWindow(qtw.QWidget):
 
             # ! TODO: APPEND STRING OF INTERMEDIATE CODE IF ANY, OTHERWISE WILL BE NONE
             # String of intermediate code
-            i_code = None
+            i_code = ''
+            for i in compiler.code:
+                i_code += i + '\n'
 
             # Si hay codigo intermedio
             if i_code:
@@ -130,9 +135,11 @@ class SecondaryWindow(qtw.QWidget):
         label = ScrollLabel()
 
         # setting text to the label
-        label.setText("Pruebaaasss\n\n\n\n\n\n\n\n\n\n\n")
+        label.setText(i_code)
 
         f = label.font()
+        f.setPointSize(13)
+
         label.setFont(f)
 
         # Add label to layout

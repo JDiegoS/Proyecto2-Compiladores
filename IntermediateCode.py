@@ -77,9 +77,9 @@ class IntermediateCode(ParserVisitor):
             if (len(ctx.right.getText()) > 0):
 
                 if ctx.right.getText().find('"') == -1 and ctx.right.getText().find('new') != -1:
-                    newVariable = self.getAttribute(ctx.right.getText().split('new')[1])
-                    if variable == None:
-                        newVariable = {'address': -1, 'size': 0, 'type': 'error'}
+                    newVariable = self.getAttribute(ctx.right.getText().split('new')[1].split(')')[0])
+                    if newVariable == None:
+                        newVariable = {'address': -1, 'size': 0, 'type': 'error', 'name': 'error'}
                     self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['name']) + '>', 'd[' + str(variable['address']) + ']')
                     return
 
@@ -125,7 +125,7 @@ class IntermediateCode(ParserVisitor):
         self.visitChildren(ctx)
         if len(self.tempOp) > 0:
             if ctx.right.getText().find('"') == -1 and ctx.right.getText().find('new') != -1:
-                    newVariable = self.getAttribute(ctx.right.getText().split('new')[1])
+                    newVariable = self.getAttribute(ctx.right.getText().split('new')[1].split(')')[0])
                     if variable == None:
                         newVariable = {'address': -1, 'size': 0, 'type': 'error'}
                     self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['name']) + '>', 'd[' + str(variable['address']) + ']')
@@ -157,7 +157,7 @@ class IntermediateCode(ParserVisitor):
             self.quads.generateQuadruple('', 't' + str(self.quads.temp-1), '', 'd[' + str(variable['address']) + ']')
 
         elif ctx.right.getText().find('"') == -1 and ctx.right.getText().find('new') != -1:
-            newVariable = self.getAttribute(ctx.right.getText().split('new')[1])
+            newVariable = self.getAttribute(ctx.right.getText().split('new')[1].split(')')[0])
             if newVariable == None:
                 newVariable = {'address': -1, 'size': 0, 'type': 'error'}
             self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['type']) + '>', 'd[' + str(newVariable['address']) + ']')
@@ -175,9 +175,35 @@ class IntermediateCode(ParserVisitor):
 
         paramFound = list(filter(lambda x: x['scope'] == ctx.name.text, self.table))
         for i in paramFound:
-                    self.quads.generateQuadruple(str(i['size']), 'allocate', '<' + str(i['type']) + '>', 'd[' + str(i['address']) + ']')
+            self.quads.generateQuadruple(str(i['size']), 'allocate', '<' + str(i['type']) + '>', 'd[' + str(i['address']) + ']')
 
         self.visitChildren(ctx)
+
+        operaciones = ['-', '+', '*', '/', '~', '<', '<=', '=']
+        for i in self.tempOp:
+
+            i[4] = i[4].replace('(', '').replace(')', '')
+            i[0] = i[0].replace('(', '').replace(')', '')
+            i[3] = i[3].replace('(', '').replace(')', '')
+            if not any(op in i[0] for op in operaciones):
+                i[0] = 't' + str(self.quads.temp)
+                self.temps.append(['t' + str(self.quads.temp), i[1]])
+                self.quads.newTemp()
+            else:
+                for j in self.temps:
+                    if i[4] ==  j[1]:
+                        i[4] = j[0]
+                    if i[0] == j[1]:
+                        i[3] = j[0]
+                        i[0] = 't' + str(self.quads.temp)
+                        
+                self.temps.append([i[0], i[1]])
+                self.quads.newTemp()
+            self.quads.generateQuadruple(i[2], i[3], i[4], i[0])
+            
+            
+        self.tempOp = []
+
         self.quads.generateQuadruple('EndFunc', '', '', '')
         
         return 
@@ -185,7 +211,9 @@ class IntermediateCode(ParserVisitor):
     def visitIdExpr(self, ctx:ParserParser.IdExprContext):
         addr = self.getAttribute(ctx.getText(), self.current_scope)
         if addr is None:
-            return 'd[0]'
+            addr = self.getAttribute(ctx.getText(), ctx.start.line)
+            if addr is None:
+                return 'd[0]'
         return 'd[' + str(addr['address']) + ']'
     
     def visitAddExpr(self, ctx):

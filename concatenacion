@@ -1,12 +1,12 @@
 class Main{
       i : IO;
       input : String;
-      concat : String;
+      cadena : String;
       output : String;
 
       main(): SELF_TYPE {{
         input <- (i.in_string());
-        concat <- (input.concat("Hola Mundo\n"));
+        cadena <- (input.concat("Concatenacion Compis"));
         i.out_string(concat);
         (new Main).main();
       }};

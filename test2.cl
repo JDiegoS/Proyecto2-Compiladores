@@ -1,5 +1,5 @@
-;
-CLASS ll Main oo{
+
+CLASS Main {
     a : Int <- 1 * 5;
     b : Bool <- false;
     c : String <- "Hola"; 

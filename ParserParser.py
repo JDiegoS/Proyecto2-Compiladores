@@ -422,6 +422,7 @@ class ParserParser ( Parser ):
             super().__init__(parser)
             self.name = None # Token
             self.parameter = None # ParamContext
+            self.right = None # ExprContext
             self.copyFrom(ctx)
 
         def LPAREN(self):
@@ -434,13 +435,13 @@ class ParserParser ( Parser ):
             return self.getToken(ParserParser.TYPE, 0)
         def LBRACE(self):
             return self.getToken(ParserParser.LBRACE, 0)
-        def expr(self):
-            return self.getTypedRuleContext(ParserParser.ExprContext,0)
-
         def RBRACE(self):
             return self.getToken(ParserParser.RBRACE, 0)
         def ID(self):
             return self.getToken(ParserParser.ID, 0)
+        def expr(self):
+            return self.getTypedRuleContext(ParserParser.ExprContext,0)
+
         def param(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(ParserParser.ParamContext)
@@ -516,7 +517,7 @@ class ParserParser ( Parser ):
                 self.state = 53
                 self.match(ParserParser.LBRACE)
                 self.state = 54
-                self.expr(0)
+                localctx.right = self.expr(0)
                 self.state = 55
                 self.match(ParserParser.RBRACE)
                 pass

@@ -1,0 +1,25 @@
+class Prueba {
+      vida: Int <- 4;
+      lol: Int;
+      division(n:Int) : Int {{
+         lol <- (vida / n);
+      }};
+  };
+
+
+class Main {
+      prueba1: Prueba <- new Prueba;
+      prueba2: Prueba <- new Prueba;
+      a: Int <- 4;
+      b: Int <- 5;
+      c: Int <- 90 - (100+30);
+      d: String <- "String";
+      e: Bool <- true;
+      suma(x:Int, y:Int) : Int { x + y};
+      main() : SELF_TYPE {{
+         while not (a = b) loop  a <- c * 2  pool;
+         if not (c < b) then a <- (c + b) else c <- (a + a) fi;
+         a <- (prueba2.vida());
+         suma(a, b);
+      }};
+  };

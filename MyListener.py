@@ -46,13 +46,16 @@ class MyListener(ParserListener):
         scope = self.symbol_table.get_scope()
 
         if kind == 'method':
+            
             self.symbol_table.push_scope(children[0])
         else:
             index = indx(children, '<-')
             if index != -1:
                 value = children[index + 1]
+                '''
                 if value.find('"') == -1 and value.find('new') != -1:
                     typ = value.split('new')[1]
+                '''
 
         self.symbol_table.insert(name, typ, kind, scope, line, value)
     

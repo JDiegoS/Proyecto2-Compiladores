@@ -296,16 +296,17 @@ public class ParserParser extends Parser {
 	public static class MethodFeatureContext extends FeatureContext {
 		public Token name;
 		public ParamContext parameter;
+		public ExprContext right;
 		public TerminalNode LPAREN() { return getToken(ParserParser.LPAREN, 0); }
 		public TerminalNode RPAREN() { return getToken(ParserParser.RPAREN, 0); }
 		public TerminalNode COLON() { return getToken(ParserParser.COLON, 0); }
 		public TerminalNode TYPE() { return getToken(ParserParser.TYPE, 0); }
 		public TerminalNode LBRACE() { return getToken(ParserParser.LBRACE, 0); }
+		public TerminalNode RBRACE() { return getToken(ParserParser.RBRACE, 0); }
+		public TerminalNode ID() { return getToken(ParserParser.ID, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode RBRACE() { return getToken(ParserParser.RBRACE, 0); }
-		public TerminalNode ID() { return getToken(ParserParser.ID, 0); }
 		public List<ParamContext> param() {
 			return getRuleContexts(ParamContext.class);
 		}
@@ -382,7 +383,7 @@ public class ParserParser extends Parser {
 				setState(53);
 				match(LBRACE);
 				setState(54);
-				expr(0);
+				((MethodFeatureContext)_localctx).right = expr(0);
 				setState(55);
 				match(RBRACE);
 				}

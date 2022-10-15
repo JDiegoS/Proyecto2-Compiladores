@@ -2,16 +2,16 @@ class Main {
       i : IO <- new IO;
       count : Int <- 0;
       input : Int;
-      ant : Int <- 1;
-      lat : Int <- 0;
+      segundo : Int <- 1;
+      primero : Int <- 0;
       output : Int;
 
       main(): IO {{
         input <- (i.in_int());
         while (count<input) loop {
-            output <- (lat + ant);
-            lat <- ant;
-            ant <- output;
+            output <- (primero + segundo);
+            primero <- segundo;
+            segundo <- output;
             count <- (count + 1);
             
         } pool;

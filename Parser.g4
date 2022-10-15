@@ -3,7 +3,7 @@ import Scanner;
 
 program:	(class)+ EOF ;
 class: CLASS name=TYPE (INHERITS inherits=TYPE)? LBRACE (feature SEMICOLON)* RBRACE SEMICOLON   #ClassDec;  
-feature: name=ID LPAREN (parameter=param (COMMA param)*)* RPAREN COLON TYPE LBRACE expr RBRACE #MethodFeature
+feature: name=ID LPAREN (parameter=param (COMMA param)*)* RPAREN COLON TYPE LBRACE right=expr RBRACE #MethodFeature
     |   ID COLON left=TYPE (ASSIGN right=expr)?    #AssignFeature
     ;
 

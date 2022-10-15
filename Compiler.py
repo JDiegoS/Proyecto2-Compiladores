@@ -16,6 +16,7 @@ class Compiler(object):
     def __init__(self):
         
         self.errors = []
+        self.code = []
 
     def compile(self, file, text):
         data = FileStream(file)
@@ -89,16 +90,17 @@ class Compiler(object):
 
         visitor = IntermediateCode(finalTable.table)
         visitor.visit(tree)
-        code = visitor.writeCode()
+        self.code = visitor.writeCode()
 
-        for i in code:
+        for i in self.code:
             print(i)
 
     
 
     
 
-    
-text=open('aritmetica').read()
+'''
+text=open('preuba').read()
 main = Compiler()
-main.compile('aritmetica', text)
+main.compile('prueba', text)
+'''

@@ -22,7 +22,7 @@ class MyVisitor(ParserVisitor):
     def getAttribute(self, name, scope=None):
         for i in self.table:
             if i['name'] == name:
-                if scope != None and i['scope'] != scope:
+                if scope != None and i['scope'] != scope and i['scope'] != 'Global':
                     continue
                 return i
         return None
@@ -383,7 +383,7 @@ class MyVisitor(ParserVisitor):
         if expr != None:
             exprType = expr['type']
         elif ctx.left.getText().find('new') != -1 and ctx.left.getText().find('"') == -1:
-            exprType = ctx.left.getText().split('new')[1]
+            exprType = ctx.left.getText().split('new')[1].split(')')[0]
         else:
             exprT = self.visit(ctx.left)
             if exprT == None:
@@ -398,11 +398,11 @@ class MyVisitor(ParserVisitor):
             self.visitChildren(ctx)
             return methodType
         exprType = exprType.replace('(', '').replace(')', '')
-        attr = self.getAttribute(exprType, ctx.start.line)
+        attr = self.getAttribute(exprType, self.current_scope)
         if attr != None:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and ((x['scope'] == exprType) or x['scope'] == attr['type']), self.table))
+            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and ((x['scope'] == exprType) or x['scope'] == attr['type'] or x['scope'] == 'Global'), self.table))
         else:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and (x['scope'] == exprType), self.table))
+            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and (x['scope'] == exprType or x['scope'] == 'Global'), self.table ))
         if len(methodType) > 0: 
             methodType = methodType[0]['type']
             if methodType == 'Object':
