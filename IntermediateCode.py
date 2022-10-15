@@ -10,6 +10,7 @@ class IntermediateCode(ParserVisitor):
         self.code = []
         self.quads = Quadruple()
         self.tempOp = []
+        self.current_scope = 'Global'
         self.temps = []
     
     def getTable(self):
@@ -26,7 +27,6 @@ class IntermediateCode(ParserVisitor):
 
     #Write code
     def writeCode(self):
-        print(self.quads.quadTable)
         for i in self.quads.quadTable:
             if i['op'] == 'not':
                 self.code.append(i['result'] + ' = ' + i['op'] + ' ' + i['arg1'] + ';')
@@ -46,26 +46,33 @@ class IntermediateCode(ParserVisitor):
                 continue
             elif i['op'] == 'BeginFunc' or i['op'] == 'EndFunc':
                 self.code.append(i['op'] + ';')
+                self.code.append('')
+
                 continue
             elif i['op'] == 'param':
                 self.code.append('param ' + i['result'] + ';')
                 continue
             elif i['op'] == 'call':
-                self.code.append(i['op'] + ' ' + i['arg1'] + ', ' + i['arg2'] +';')
+                if i['result'] == '':
+                    self.code.append(i['op'] + ' ' + i['arg1'] + ', ' + i['arg2'] +';')
+                else:
+                    self.code.append(i['result'] + ' = ' + i['op'] + ' ' + i['arg1'] + ', ' + i['arg2'] +';')
                 continue
 
-            self.code.append(i['result'] + ' = ' + i['arg1'] + ' ' + i['op'] + ' ' + i['arg2'] + ';')
+            self.code.append((i['result'] + ' = ' + i['arg1'] + ' ' + i['op'] + ' ' + i['arg2'] + ';').replace('  ', ''))
         return self.code
     
     #Visits
     def visitClassDec(self, ctx):
-        
-        return self.visitChildren(ctx)
+        self.current_scope = ctx.name.text
+        self.visitChildren(ctx)
+        self.current_scope = 'Global'
+        return 
             
     def visitAssignFeature(self, ctx:ParserParser.AssignFeatureContext):
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
-        variable = self.getAttribute(name, ctx.start.line)
+        variable = self.getAttribute(name, self.current_scope)
         if (ctx.right != None):
             if (len(ctx.right.getText()) > 0):
 
@@ -111,7 +118,7 @@ class IntermediateCode(ParserVisitor):
     def visitAssignExpr(self, ctx:ParserParser.AssignExprContext):
         children = list(map(lambda x: x.getText(), ctx.children))
         name = children[0]
-        variable = self.getAttribute(name, ctx.start.line)
+        variable = self.getAttribute(name, self.current_scope)
         if variable == None:
             variable = {'address': -1}
         operaciones = ['-', '+', '*', '/', '~', '<', '<=', '=']
@@ -154,13 +161,16 @@ class IntermediateCode(ParserVisitor):
             if newVariable == None:
                 newVariable = {'address': -1, 'size': 0, 'type': 'error'}
             self.quads.generateQuadruple(str(newVariable['size']), 'allocate', '<' + str(newVariable['type']) + '>', 'd[' + str(newVariable['address']) + ']')
+        elif ctx.right.getText().find('.') != -1 and ctx.right.getText().find('(') != -1:
+            self.quads.quadTable[-1]['result'] = 'd[' + str(variable['address']) + ']'
+
         else:
             self.quads.generateQuadruple('', ctx.right.getText(), '', 'd[' + str(variable['address']) + ']')
         return
 
     
     def visitMethodFeature(self, ctx):
-        self.quads.generateQuadruple('method', '', '', ctx.name.text)
+        self.quads.generateQuadruple('method', '', '', self.current_scope + '.' + ctx.name.text)
         self.quads.generateQuadruple('BeginFunc', '', '', '')
 
         paramFound = list(filter(lambda x: x['scope'] == ctx.name.text, self.table))
@@ -173,7 +183,7 @@ class IntermediateCode(ParserVisitor):
         return 
 
     def visitIdExpr(self, ctx:ParserParser.IdExprContext):
-        addr = self.getAttribute(ctx.getText(), ctx.start.line)
+        addr = self.getAttribute(ctx.getText(), self.current_scope)
         if addr is None:
             return 'd[0]'
         return 'd[' + str(addr['address']) + ']'
@@ -335,35 +345,28 @@ class IntermediateCode(ParserVisitor):
 
     def visitMethodDotExpr(self, ctx):
 
-        exprType = 'Error'
-        
-        expr = self.getAttribute(ctx.left.getText())
-        if expr != None:
-            exprType = expr['type']
+        paramFound = list(filter(lambda x: x['scope'] == ctx.name.text, self.table))
+        if len(paramFound) != 0 and ctx.first != None:
+            dotIndex = ctx.getText().index('.')
+            indexStart = ctx.getText()[dotIndex:].index('(')
+            if indexStart != -1:
+                params = ctx.getText()[dotIndex + indexStart+1:-1].split(',')
+                indx = 0
+                
+                while indx < len(params) and indx < len(paramFound):
+                    variable = self.getAttribute(params[indx], ctx.name.text)
+                    if variable != None:
+                        self.quads.generateQuadruple('param', '', '', 'd[' + str(variable['address']) + ']')
+                    else:
+                        self.quads.generateQuadruple('param', '', '', params[indx])
+                   
+                    indx += 1
 
+
+            self.quads.generateQuadruple('call', ctx.name.text, str(indx), '')
         else:
-            exprT = self.visit(ctx.left)
-            if exprT == None:
-                for i in ctx.left.children:
-                    temp = self.visit(i)
-                    if temp != None:
-                        exprType = temp
-
-
-
-        attr = self.getAttribute(exprType)
-        if attr != None:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and ((x['scope'] == exprType) or x['scope'] == attr['type']), self.table))
-        else:
-            methodType = list(filter(lambda x: (x['name'] == ctx.name.text) and (x['scope'] == exprType), self.table))
-        if len(methodType) > 0: 
-            methodType = methodType[0]['type']
-            if methodType == 'Object':
-                methodType = exprType
-        
-            if methodType == 'SELF_TYPE':
-                methodType = exprType
-            return methodType
+            self.quads.generateQuadruple('call', ctx.name.text, '0', '')
+        return self.visitChildren(ctx)
     
     def visitMethodParenExpr(self, ctx):
 
@@ -385,6 +388,6 @@ class IntermediateCode(ParserVisitor):
                     indx += 1
 
 
-        self.quads.generateQuadruple('call', ctx.name.text, str(indx), '')
+            self.quads.generateQuadruple('call', ctx.name.text, str(indx), '')
         
         return self.visitChildren(ctx)

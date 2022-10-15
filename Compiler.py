@@ -85,7 +85,7 @@ class Compiler(object):
         print(str(finalTable) + "\n")
 
 
-        print("\n TABLA DE CUADRUPLAS\n")
+        print("\n CODIGO INTERMEDIO\n")
 
         visitor = IntermediateCode(finalTable.table)
         visitor.visit(tree)
@@ -99,6 +99,6 @@ class Compiler(object):
     
 
     
-text=open('concat').read()
+text=open('aritmetica').read()
 main = Compiler()
-main.compile('concat', text)
+main.compile('aritmetica', text)

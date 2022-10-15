@@ -395,7 +395,8 @@ class MyVisitor(ParserVisitor):
         if exprType == 'Error':
             print("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.start.line, ctx.start.column, ctx.getText()))
-            return
+            self.visitChildren(ctx)
+            return methodType
         exprType = exprType.replace('(', '').replace(')', '')
         attr = self.getAttribute(exprType, ctx.start.line)
         if attr != None:
@@ -409,34 +410,56 @@ class MyVisitor(ParserVisitor):
         
             if methodType == 'SELF_TYPE':
                 methodType = exprType
-            return methodType
+            
         else:
             print("ERROR: El atributo '%s' no contiene el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
             self.errors.append("ERROR: El atributo '%s' no contiene el metodo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (ctx.left.getText(), ctx.name.text, ctx.start.line, ctx.start.column, ctx.getText()))
-            return 'Error'
+            self.visitChildren(ctx)
+            return methodType
+        
+        paramFound = list(filter(lambda x: x['scope'] == ctx.name.text, self.table))
+        if len(paramFound) != 0 and ctx.first != None:
+            indexStart = ctx.getText().index('(')
+            if indexStart != -1:
+                params = ctx.getText()[indexStart+1:-1].split(',')
+                if len(params) != len(paramFound):
+                    
+                    print("ERROR: Cantidad de argumentos incorrecta\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+                    self.errors.append("ERROR: Cantidad de argumentos incorrecta\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+                paramNodes = []
+                i = 0
+                index = -2
+                while i != len(paramFound):
+                    paramNodes.append(ctx.children[index])
+                    index -= 2
+                    i += 1
+                paramNodes.reverse()
+                paramTypes = []
+                for i in paramNodes:
+                    val = i.getText()
+                    vType = 'Error'
+                    if val.isdigit():
+                        vType = "Int"
+                    elif val == 'true' or val == 'TRUE' or val == 'false' or val == 'FALSE':
+                        vType = "Bool"
+                    elif val.count('"') == 2:
+                        vType = "String"
+                    else:
+                        variable = self.getAttribute(val)
+                        if variable != None:
+                            vType = variable['type']
+                        else:
+                            print("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (val, ctx.start.line, ctx.start.column, ctx.getText()))
+                            self.errors.append("ERROR: No se declaro la variable o tipo '%s'\n\tLinea [%s:%s] \n\t\t%s" % (val, ctx.start.line, ctx.start.column, ctx.getText()))
+                    paramTypes.append(vType)
+                    
+                expectedTypes = list(map(lambda x: x['type'], paramFound))
+                if expectedTypes != paramTypes:
+                    print("ERROR: Tipo(s) de argumentos no coinciden con la definicion del metodo\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+                    self.errors.append("ERROR: Tipo(s) de argumentos no coinciden con la definicion del metodo\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+        self.visitChildren(ctx)
+        return methodType
          
-    def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
-        return self.visit(ctx.children[1])
-    
-    def visitIfThenExpr(self, ctx:ParserParser.IfThenExprContext):
-        first = self.visit(ctx.first)
-        if first != 'Bool':
-            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-        self.visit(ctx.second)
-        self.visit(ctx.third)
-        return
-
-    def visitWhileExpr(self, ctx:ParserParser.WhileExprContext):
-        left = self.visit(ctx.left)
-        if left != 'Bool':
-            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
-        self.visit(ctx.right)
-        return
-
-
-
     def visitMethodParenExpr(self, ctx):
         attr = self.getAttribute(self.current_scope)
         if attr != None:
@@ -498,3 +521,27 @@ class MyVisitor(ParserVisitor):
                     self.errors.append("ERROR: Tipo(s) de argumentos no coinciden con la definicion del metodo\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
         self.visitChildren(ctx)
         return methodType
+    
+    def visitParenExpr(self, ctx:ParserParser.ParenExprContext):
+        return self.visit(ctx.children[1])
+    
+    def visitIfThenExpr(self, ctx:ParserParser.IfThenExprContext):
+        first = self.visit(ctx.first)
+        if first != 'Bool':
+            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+        self.visit(ctx.second)
+        self.visit(ctx.third)
+        return
+
+    def visitWhileExpr(self, ctx:ParserParser.WhileExprContext):
+        left = self.visit(ctx.left)
+        if left != 'Bool':
+            print("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+            self.errors.append("ERROR: La expresion condicional debe ser de tipo Bool\n\tLinea [%s:%s] \n\t\t%s" % (ctx.start.line, ctx.start.column, ctx.getText()))
+        self.visit(ctx.right)
+        return
+
+
+
+    
